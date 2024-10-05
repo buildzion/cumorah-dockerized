@@ -1,0 +1,6 @@
+.env
+
+dockerdata/postgres
+**.html
+**.py
+
