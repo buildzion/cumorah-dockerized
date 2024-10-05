@@ -1,6 +1,8 @@
 .env
 
 dockerdata/postgres
+dockerdata/media
 **.html
 **.py
 
+.idea/

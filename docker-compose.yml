@@ -1,18 +1,20 @@
 
 services:
   web:
-    image: "${CUMORAH_IMAGE:-ghcr.io/buildzion/cumorah}:${CUMORAH_TAG:-latest}"
+    image: "${CUMORAH_IMAGE:-ghcr.io/buildzion/cumorah}:${CUMORAH_TAG:-main}"
     ports:
       - "${LISTEN_PORT:-8000}:8000"
     environment:
       PYTHONPATH: "/host/python"
       DOCKER_TEMPLATE_DIR: "/host/templates"
+      DOCKER_MEDIA_ROOT: "/host/media"
       DJANGO_SETTINGS_MODULE: "${DJANGO_SETTINGS_MODULE:-cumorah.settings.production}"
       PYTHONUNBUFFERED: "1"
       DATABASE_URL: "${DATABASE_URL:-postgres://cumorah:cumorah@postgres/cumorah}"
     volumes:
       - ./dockerdata/python:/host/python
       - ./dockerdata/templates:/host/templates
+      - ./dockerdata/media:/host/media
     depends_on:
       - postgres
 
