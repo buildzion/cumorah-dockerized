@@ -1,6 +1,7 @@
 .env
 
 dockerdata/postgres
+dockerdata/letsencrypt
 dockerdata/media
 **.html
 **.py
