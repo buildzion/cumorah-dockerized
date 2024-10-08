@@ -2,8 +2,7 @@
 services:
   web:
     image: "${CUMORAH_IMAGE:-ghcr.io/buildzion/cumorah}:${CUMORAH_TAG:-main}"
-#    ports:
-#      - "${LISTEN_PORT:-8000}:8000"
+    hostname: web
     environment:
       PYTHONPATH: "/host/python"
       DOCKER_TEMPLATE_DIR: "/host/templates"
@@ -17,10 +16,10 @@ services:
       - ./dockerdata/media:/host/media
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.cumorah.rule=Host(`${CUMORAH_HOSTNAME}`)"
-      - "traefik.http.routers.cumorah.priority=2"
-      - "traefik.http.routers.cumorah.entrypoints=websecure"
-      - "traefik.http.routers.cumorah.tls.certresolver=myresolver"
+      - "traefik.http.routers.web.rule=Host(`${CUMORAH_HOSTNAME}`)"
+      - "traefik.http.routers.web.priority=40"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.tls.certresolver=myresolver"
     depends_on:
       - postgres
 
@@ -35,21 +34,20 @@ services:
 
   nginx:
     image: nginx:1.27-bookworm
-#    ports:
-#      - "${MEDIA_LISTEN_PORT:-8001}:80"
+    hostname: nginx
     volumes:
       - ./dockerdata/media:/usr/share/nginx/html/media
       - ./config/nginx-conf.d:/etc/nginx/conf.d
     labels:
       - "traefik.enable=true"
-#      - "traefik.http.routers.media.rule=Host(`${CUMORAH_HOSTNAME}`)"
-      - "traefik.http.routers.media.rule=Host(`${CUMORAH_HOSTNAME}`) && Path(`/media/`)"
-      - "traefik.http.routers.media.priority=1"
-      - "traefik.http.routers.media.entrypoints=websecure"
-      - "traefik.http.routers.media.tls.certresolver=myresolver"
+#      - "traefik.http.routers.nginx.rule=Host(`${CUMORAH_HOSTNAME}`)"
+      - "traefik.http.routers.nginx.rule=Host(`${CUMORAH_HOSTNAME}`) && PathPrefix(`/media/`)"
+      - "traefik.http.routers.nginx.priority=50"
+      - "traefik.http.routers.nginx.entrypoints=websecure"
+      - "traefik.http.routers.nginx.tls.certresolver=myresolver"
 
   proxy:
-    image: traefik:v3.1
+    image: traefik:v2.11
     command:
       - "--log.level=${TRAEFIK_LOG_LEVEL:-INFO}"
       - "--api.insecure=true"
@@ -57,6 +55,9 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--entryPoints.web.address=:80"
       - "--entryPoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
       - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
       - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
 #      - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -70,4 +71,5 @@ services:
       - ./dockerdata/letsencrypt:/letsencrypt
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     depends_on:
+      - web
       - nginx
