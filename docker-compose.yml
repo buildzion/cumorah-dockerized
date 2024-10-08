@@ -15,11 +15,12 @@ services:
       - ./dockerdata/python:/host/python
       - ./dockerdata/templates:/host/templates
       - ./dockerdata/media:/host/media
-#    labels:
-#      - "traefik.enable=true"
-#      - "traefik.http.routers.cumorah.rule=Host(`${CUMORAH_HOSTNAME}`)"
-#      - "traefik.http.routers.cumorah.entrypoints=websecure"
-#      - "traefik.http.routers.cumorah.tls.certresolver=myresolver"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cumorah.rule=Host(`${CUMORAH_HOSTNAME}`)"
+      - "traefik.http.routers.cumorah.priority=2"
+      - "traefik.http.routers.cumorah.entrypoints=websecure"
+      - "traefik.http.routers.cumorah.tls.certresolver=myresolver"
     depends_on:
       - postgres
 
@@ -41,10 +42,11 @@ services:
       - ./config/nginx-conf.d:/etc/nginx/conf.d
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.media.rule=Host(`${CUMORAH_HOSTNAME}`)"
+#      - "traefik.http.routers.media.rule=Host(`${CUMORAH_HOSTNAME}`)"
+      - "traefik.http.routers.media.rule=Host(`${CUMORAH_HOSTNAME}`) && Path(`/media/`)"
+      - "traefik.http.routers.media.priority=1"
       - "traefik.http.routers.media.entrypoints=websecure"
       - "traefik.http.routers.media.tls.certresolver=myresolver"
-
 
   proxy:
     image: traefik:v3.1
@@ -60,6 +62,7 @@ services:
 #      - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
       - "--certificatesresolvers.myresolver.acme.email=${LETSENCRYPT_EMAIL}"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--accesslog=true"
     ports:
       - "${HTTP_LISTEN_PORT:-80}:80"
       - "${HTTPS_LISTEN_PORT:-443}:443"
@@ -67,5 +70,4 @@ services:
       - ./dockerdata/letsencrypt:/letsencrypt
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     depends_on:
-      - web
-      - staticmedia
+      - nginx
