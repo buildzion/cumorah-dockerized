@@ -8,6 +8,7 @@ services:
       DOCKER_TEMPLATE_DIR: "/host/templates"
       DOCKER_MEDIA_ROOT: "/host/media"
       DJANGO_SETTINGS_MODULE: "${DJANGO_SETTINGS_MODULE:-cumorah.settings.production}"
+      SECRET_KEY: "${DJANGO_SECRET_KEY:-YouReallyNeedToSetThisForSecurityReasons}"
       PYTHONUNBUFFERED: "1"
       DATABASE_URL: "${DATABASE_URL:-postgres://cumorah:cumorah@postgres/cumorah}"
     volumes:
@@ -40,7 +41,6 @@ services:
       - ./config/nginx-conf.d:/etc/nginx/conf.d
     labels:
       - "traefik.enable=true"
-#      - "traefik.http.routers.nginx.rule=Host(`${CUMORAH_HOSTNAME}`)"
       - "traefik.http.routers.nginx.rule=Host(`${CUMORAH_HOSTNAME}`) && PathPrefix(`/media/`)"
       - "traefik.http.routers.nginx.priority=50"
       - "traefik.http.routers.nginx.entrypoints=websecure"
@@ -60,7 +60,7 @@ services:
       - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
       - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
       - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
-#      - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.caserver=${ACME_CA_SERVER:-https://acme-staging-v02.api.letsencrypt.org/directory}"
       - "--certificatesresolvers.myresolver.acme.email=${LETSENCRYPT_EMAIL}"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
       - "--accesslog=true"
